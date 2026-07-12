@@ -1,0 +1,174 @@
+// مخطط قاعدة بيانات نظام كنوال المالي
+// ملاحظة: SQLite لا يدعم نوع Decimal الأصلي، لذا تُخزَّن كل المبالغ المالية
+// كأعداد صحيحة بأصغر وحدة عملة (القرش = 1/100). كل الحسابات تتم عبر decimal.js
+// لضمان الدقة العشرية الكاملة دون استخدام Float.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Truck {
+  id            String   @id @default(cuid())
+  plateNumber   String   @unique
+  model         String
+  year          Int?
+  purchaseDate  DateTime?
+  purchaseValue Int? // بالقرش (1/100)
+  status        String   @default("تعمل") // تعمل | صيانة | متوقفة
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  assignments TruckDriverAssignment[]
+  revenues   Revenue[]
+  expenses   Expense[]
+
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model Employee {
+  id         String   @id @default(cuid())
+  name       String
+  role       String // سائق | فني | إداري
+  salaryType String // ثابت | بالرحلة | نسبة
+  baseSalary Int? // بالقرش (1/100)
+  phone      String?
+  hireDate   DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  assignments TruckDriverAssignment[]
+  payroll     Payroll[]
+
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model TruckDriverAssignment {
+  id        String   @id @default(cuid())
+  truckId   String
+  employeeId String
+  startDate DateTime
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+
+  truck   Truck   @relation(fields: [truckId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([truckId])
+  @@index([employeeId])
+}
+
+model ExpenseCategory {
+  id   String @id @default(cuid())
+  name String @unique
+
+  expenses Expense[]
+}
+
+model Revenue {
+  id          String   @id @default(cuid())
+  truckId     String
+  date        DateTime
+  clientName  String
+  destination String?
+  revenueType String // أجرة نقل | عقد شهري | إيجار شاحنة
+  amount      Int // بالقرش (1/100)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  truck Truck @relation(fields: [truckId], references: [id])
+
+  @@index([truckId])
+  @@index([date])
+  @@index([deletedAt])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  truckId     String? // null = مصروف عام غير مرتبط بشاحنة
+  categoryId  String
+  date        DateTime
+  amount      Int // بالقرش (1/100)
+  description String?
+  receiptImage String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  truck    Truck?         @relation(fields: [truckId], references: [id])
+  category ExpenseCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([truckId])
+  @@index([categoryId])
+  @@index([date])
+  @@index([deletedAt])
+}
+
+model Payroll {
+  id         String   @id @default(cuid())
+  employeeId String
+  month      String // YYYY-MM
+  baseAmount Int // بالقرش (1/100) - الراتب الأساسي المسجل للشهر
+  deductions Int // بالقرش (1/100) - الخصومات
+  advances   Int // بالقرش (1/100) - السلف المصروفة خلال الشهر
+  net        Int // بالقرش (1/100) - صافي المستحق = baseAmount - deductions - advances
+  paid       Boolean  @default(false)
+  paymentDate DateTime?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, month])
+  @@index([month])
+  @@index([deletedAt])
+}
+
+model CompanySettings {
+  id           String  @id @default("singleton")
+  companyName  String  @default("")
+  currency     String  @default("د.إ")
+  fiscalYearStart String?
+  logoUrl      String?
+  address      String?
+  phone        String?
+  email        String?
+  taxNumber    String?
+  primaryColor   String @default("#1d4ed8")
+  secondaryColor String @default("#1e293b")
+  accentColor    String @default("#10b981")
+  updatedAt    DateTime @updatedAt
+}
+
+// مستخدمو النظام: يُستخدمون لتسجيل الدخول وتغيير كلمة المرور من داخل النظام
+model SystemUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String // الصيغة: salt:hash (بالتشفير السداسي)
+  displayName  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// سجل النشاط: يُسجَّل تلقائيًا كل إضافة/تعديل/حذف (والنسخ الاحتياطي)
+model ActivityLog {
+  id         String   @id @default(cuid())
+  action     String // إضافة | تعديل | حذف | إضافة/تعديل | استيراد | تصدير
+  entityType String // الشاحنة | الموظف | الإيراد | المصروف | الراتب | إعدادات الشركة | النسخة الاحتياطية
+  entityId   String?
+  summary    String
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
