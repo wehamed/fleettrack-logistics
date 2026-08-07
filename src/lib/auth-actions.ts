@@ -31,7 +31,6 @@ export async function login(
     maxAge: SESSION_MAX_AGE,
     secure: process.env.NODE_ENV === "production",
   });
-  console.log("[login] redirecting to /");
   redirect("/");
 }
 

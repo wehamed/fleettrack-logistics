@@ -8,9 +8,6 @@ const dbPath =
   process.env.DATABASE_FILE ??
   path.join(process.cwd(), "dev.db");
 
-console.log("[Prisma] Database path:", dbPath);
-console.log("[Prisma] Working directory:", process.cwd());
-
 const adapter = new PrismaLibSql({ url: `file:${dbPath}` });
 
 const base = new PrismaClient({
@@ -21,7 +18,7 @@ const base = new PrismaClient({
 // Test connection on startup
 if (process.env.NODE_ENV !== "production") {
   base.$connect().then(() => {
-    console.log("[Prisma] Database connected successfully");
+    console.info("[Prisma] Database connected successfully");
   }).catch((e) => {
     console.error("[Prisma] Connection failed:", e);
   });

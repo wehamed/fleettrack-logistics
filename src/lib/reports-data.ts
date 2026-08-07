@@ -11,8 +11,6 @@ function toDateInput(d: Date): string {
 // جلب كل البيانات المالية المطلوبة للوحة التحكم والتقارير دفعة واحدة.
 // الحجم متواضع لهذا النظام (أسطول 9 شاحنات) فيُعاد حسابه في العميل حسب الفترة.
 export async function getReportDataset(): Promise<ReportDataset> {
-  console.log("[reports-data] Starting getReportDataset...");
-  const start = Date.now();
   try {
     const [revenues, expenses, payroll, trucks, settings] = await Promise.all([
       prisma.revenue.findMany({
@@ -55,15 +53,6 @@ export async function getReportDataset(): Promise<ReportDataset> {
         select: { currency: true },
       }),
     ]);
-
-    console.log("[reports-data] Query results:", {
-      revenues: revenues.length,
-      expenses: expenses.length,
-      payroll: payroll.length,
-      trucks: trucks.length,
-      settings: settings ? "found" : "null",
-      elapsed: Date.now() - start
-    });
 
     return {
     currency: settings?.currency ?? "د.إ",
