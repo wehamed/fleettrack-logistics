@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,20 +33,11 @@ export function EmployeeFormDialog({
   onOpenChange: (v: boolean) => void;
   employee: EmployeeRow | null;
 }) {
-  const [role, setRole] = useState("سائق");
-  const [salaryType, setSalaryType] = useState("ثابت");
+  const [role, setRole] = useState(employee?.role ?? "سائق");
+  const [salaryType, setSalaryType] = useState(employee?.salaryType ?? "ثابت");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const isEdit = Boolean(employee);
-
-  useEffect(() => {
-    if (open) {
-      setRole(employee?.role ?? "سائق");
-      setSalaryType(employee?.salaryType ?? "ثابت");
-      setError(null);
-      setPending(false);
-    }
-  }, [open, employee]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

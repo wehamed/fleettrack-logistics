@@ -117,8 +117,8 @@ export async function savePayroll(formData: FormData): Promise<ActionResult> {
 
     revalidatePath("/payroll");
     return { ok: true };
-  } catch (e: any) {
-    if (e?.code === "P2002") {
+  } catch (e: unknown) {
+    if (typeof e === "object" && e !== null && "code" in e && e.code === "P2002") {
       return {
         ok: false,
         error: "يوجد بالفعل راتب مسجل لهذا الموظف في هذا الشهر — عدّل السجل الموجود بدل تسجيل واحد جديد",

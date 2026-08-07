@@ -122,6 +122,7 @@ export function TrucksView({
       )}
 
       <TruckFormDialog
+        key={editing?.id ?? "new"}
         open={formOpen}
         onOpenChange={setFormOpen}
         truck={editing}

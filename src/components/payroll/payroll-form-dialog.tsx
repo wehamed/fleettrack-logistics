@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,34 +63,20 @@ export function PayrollFormDialog({
   presetEmployeeId?: string;
 }) {
   const editing = payroll != null;
-  const [employeeId, setEmployeeId] = useState("");
-  const [baseAmount, setBaseAmount] = useState("");
-  const [deductions, setDeductions] = useState("");
-  const [advances, setAdvances] = useState("");
-  const [notes, setNotes] = useState("");
+  const [employeeId, setEmployeeId] = useState(
+    payroll ? payroll.employeeId : (presetEmployeeId ?? employees[0]?.id ?? "")
+  );
+  const [baseAmount, setBaseAmount] = useState(() => {
+    if (payroll) return (payroll.baseAmount / 100).toFixed(2);
+    const empId = presetEmployeeId ?? employees[0]?.id ?? "";
+    const emp = employees.find((e) => e.id === empId);
+    return emp && emp.baseSalary != null ? (emp.baseSalary / 100).toFixed(2) : "";
+  });
+  const [deductions, setDeductions] = useState(payroll ? (payroll.deductions / 100).toFixed(2) : "");
+  const [advances, setAdvances] = useState(payroll ? (payroll.advances / 100).toFixed(2) : "");
+  const [notes, setNotes] = useState(payroll ? (payroll.notes ?? "") : "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    setError(null);
-    if (payroll) {
-      setEmployeeId(payroll.employeeId);
-      setBaseAmount((payroll.baseAmount / 100).toFixed(2));
-      setDeductions((payroll.deductions / 100).toFixed(2));
-      setAdvances((payroll.advances / 100).toFixed(2));
-      setNotes(payroll.notes ?? "");
-    } else {
-      const empId = presetEmployeeId ?? employees[0]?.id ?? "";
-      setEmployeeId(empId);
-      const emp = employees.find((e) => e.id === empId);
-      setBaseAmount(emp && emp.baseSalary != null ? (emp.baseSalary / 100).toFixed(2) : "");
-      setDeductions("");
-      setAdvances("");
-      setNotes("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, payroll]);
 
   function onEmployeeChange(id: string) {
     setEmployeeId(id);

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const STRIP = ["createdAt", "updatedAt", "deletedAt"];
-function clean(row: Record<string, unknown>): any {
+const STRIP = ["createdAt", "updatedAt", "deletedAt"] as const;
+function clean<T extends Record<string, unknown>>(row: T) {
   const out: Record<string, unknown> = { ...row };
   for (const k of STRIP) delete out[k];
-  return out;
+  return out as Omit<T, (typeof STRIP)[number]>;
 }
 
 export async function GET() {
@@ -48,7 +49,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  (globalThis as any).__suppressActivityLog = true;
+  globalThis.__suppressActivityLog = true;
   try {
     const form = await req.formData();
     const file = form.get("file");
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "ملف غير صالح" }, { status: 400 });
     }
     const text = await file.text();
-    const data = JSON.parse(text) as Record<string, any>;
+    const data = JSON.parse(text) as Record<string, unknown>;
 
     await prisma.$transaction(async (tx) => {
       await tx.activityLog.deleteMany({});
@@ -70,26 +71,26 @@ export async function POST(req: NextRequest) {
       await tx.employee.deleteMany({});
 
       if (Array.isArray(data.systemUsers) && data.systemUsers.length)
-        await tx.systemUser.createMany({ data: data.systemUsers.map(clean) });
+        await tx.systemUser.createMany({ data: data.systemUsers.map(clean) as Prisma.SystemUserCreateManyInput[] });
       if (Array.isArray(data.expenseCategories) && data.expenseCategories.length)
-        await tx.expenseCategory.createMany({ data: data.expenseCategories.map(clean) });
+        await tx.expenseCategory.createMany({ data: data.expenseCategories.map(clean) as Prisma.ExpenseCategoryCreateManyInput[] });
       if (Array.isArray(data.trucks) && data.trucks.length)
-        await tx.truck.createMany({ data: data.trucks.map(clean) });
+        await tx.truck.createMany({ data: data.trucks.map(clean) as Prisma.TruckCreateManyInput[] });
       if (Array.isArray(data.employees) && data.employees.length)
-        await tx.employee.createMany({ data: data.employees.map(clean) });
+        await tx.employee.createMany({ data: data.employees.map(clean) as Prisma.EmployeeCreateManyInput[] });
       if (Array.isArray(data.assignments) && data.assignments.length)
-        await tx.truckDriverAssignment.createMany({ data: data.assignments.map(clean) });
+        await tx.truckDriverAssignment.createMany({ data: data.assignments.map(clean) as Prisma.TruckDriverAssignmentCreateManyInput[] });
       if (Array.isArray(data.revenues) && data.revenues.length)
-        await tx.revenue.createMany({ data: data.revenues.map(clean) });
+        await tx.revenue.createMany({ data: data.revenues.map(clean) as Prisma.RevenueCreateManyInput[] });
       if (Array.isArray(data.expenses) && data.expenses.length)
-        await tx.expense.createMany({ data: data.expenses.map(clean) });
+        await tx.expense.createMany({ data: data.expenses.map(clean) as Prisma.ExpenseCreateManyInput[] });
       if (Array.isArray(data.payroll) && data.payroll.length)
-        await tx.payroll.createMany({ data: data.payroll.map(clean) });
+        await tx.payroll.createMany({ data: data.payroll.map(clean) as Prisma.PayrollCreateManyInput[] });
       if (Array.isArray(data.activityLog) && data.activityLog.length)
-        await tx.activityLog.createMany({ data: data.activityLog.map(clean) });
+        await tx.activityLog.createMany({ data: data.activityLog.map(clean) as Prisma.ActivityLogCreateManyInput[] });
 
       if (data.companySettings) {
-        const cs = data.companySettings;
+        const cs = data.companySettings as Prisma.CompanySettingsUncheckedCreateInput;
         await tx.companySettings.upsert({
           where: { id: "singleton" },
           update: {
@@ -134,6 +135,6 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   } finally {
-    (globalThis as any).__suppressActivityLog = false;
+    globalThis.__suppressActivityLog = false;
   }
 }

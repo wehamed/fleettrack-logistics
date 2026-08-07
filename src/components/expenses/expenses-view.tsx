@@ -203,6 +203,7 @@ export function ExpensesView({
       )}
 
       <ExpenseFormDialog
+        key={editing?.id ?? "new"}
         open={formOpen}
         onOpenChange={setFormOpen}
         expense={editing}

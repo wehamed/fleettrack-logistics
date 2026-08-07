@@ -110,7 +110,7 @@ export function EmployeesView({ employees }: { employees: EmployeeRow[] }) {
         <EmployeeKanban employees={filtered} onEdit={openEdit} onOpen={setDetail} />
       )}
 
-      <EmployeeFormDialog open={formOpen} onOpenChange={setFormOpen} employee={editing} />
+      <EmployeeFormDialog key={editing?.id ?? "new"} open={formOpen} onOpenChange={setFormOpen} employee={editing} />
 
       <EmployeeDetailDialog
         employee={detail}

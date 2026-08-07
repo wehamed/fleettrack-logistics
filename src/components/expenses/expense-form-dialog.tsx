@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,24 +37,13 @@ export function ExpenseFormDialog({
   trucks: TruckOption[];
   categories: CategoryOption[];
 }) {
-  const [truckId, setTruckId] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [truckId, setTruckId] = useState(expense?.truckId ?? "");
+  const [categoryId, setCategoryId] = useState(expense?.categoryId ?? "");
   const [keepReceipt, setKeepReceipt] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = Boolean(expense);
-
-  useEffect(() => {
-    if (open) {
-      setTruckId(expense?.truckId ?? "");
-      setCategoryId(expense?.categoryId ?? "");
-      setKeepReceipt(true);
-      setError(null);
-      setPending(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }, [open, expense]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

@@ -171,6 +171,7 @@ export function PayrollView({
       )}
 
       <PayrollFormDialog
+        key={editing?.id ?? (presetEmployeeId ?? "new")}
         open={formOpen}
         onOpenChange={setFormOpen}
         payroll={editing}

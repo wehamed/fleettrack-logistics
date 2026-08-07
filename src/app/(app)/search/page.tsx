@@ -2,21 +2,23 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/layout/page-header";
 import { formatMoney } from "@/lib/money";
-import { Search, Truck, Users, DollarSign, Wallet, ArrowLeft } from "lucide-react";
+import { Truck, Users, DollarSign, Wallet, ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 type SP = { searchParams: Promise<{ q?: string }> };
 
+type SearchItem = { id: string; title: string; sub: string; href: string };
+
 export default async function SearchPage({ searchParams }: SP) {
   const { q } = await searchParams;
   const term = (q ?? "").trim();
 
-  let trucks: any[] = [];
-  let employees: any[] = [];
-  let revenues: any[] = [];
-  let expenses: any[] = [];
-  let payrolls: any[] = [];
+  let trucks: SearchItem[] = [];
+  let employees: SearchItem[] = [];
+  let revenues: SearchItem[] = [];
+  let expenses: SearchItem[] = [];
+  let payrolls: SearchItem[] = [];
 
   if (term) {
     const like = { contains: term };
@@ -48,24 +50,24 @@ export default async function SearchPage({ searchParams }: SP) {
       }),
     ]);
     const currency = settings?.currency ?? "د.إ";
-    trucks = t.map((x: any) => ({ id: x.id, title: x.plateNumber, sub: x.model, href: "/trucks" }));
-    employees = e.map((x: any) => ({ id: x.id, title: x.name, sub: `${x.role} — ${x.salaryType}`, href: "/employees" }));
-    revenues = r.map((x: any) => ({
-      id: x.id,
-      title: x.clientName,
-      sub: `${x.revenueType}${x.destination ? " — " + x.destination : ""} • ${formatMoney(x.amount, currency)}`,
+    trucks = t.map((truck) => ({ id: truck.id, title: truck.plateNumber, sub: truck.model, href: "/trucks" }));
+    employees = e.map((emp) => ({ id: emp.id, title: emp.name, sub: `${emp.role} — ${emp.salaryType}`, href: "/employees" }));
+    revenues = r.map((rev) => ({
+      id: rev.id,
+      title: rev.clientName,
+      sub: `${rev.revenueType}${rev.destination ? " — " + rev.destination : ""} • ${formatMoney(rev.amount, currency)}`,
       href: "/revenues",
     }));
-    expenses = x.map((x: any) => ({
-      id: x.id,
-      title: x.description || "مصروف",
-      sub: `${formatMoney(x.amount, currency)}`,
+    expenses = x.map((exp) => ({
+      id: exp.id,
+      title: exp.description || "مصروف",
+      sub: `${formatMoney(exp.amount, currency)}`,
       href: "/expenses",
     }));
-    payrolls = p.map((x: any) => ({
-      id: x.id,
-      title: x.employee?.name ?? "—",
-      sub: `الصافي: ${formatMoney(x.netPayable, currency)}${x.paid ? " (مدفوع)" : ""}`,
+    payrolls = p.map((pay) => ({
+      id: pay.id,
+      title: pay.employee?.name ?? "—",
+      sub: `الصافي: ${formatMoney(pay.net, currency)}${pay.paid ? " (مدفوع)" : ""}`,
       href: "/payroll",
     }));
   }
@@ -99,7 +101,7 @@ export default async function SearchPage({ searchParams }: SP) {
                 <div className="text-sm text-secondary-400 py-2">لا نتائج</div>
               ) : (
                 <ul className="space-y-1">
-                  {g.items.map((it: any) => (
+                  {g.items.map((it) => (
                     <li key={it.id}>
                       <Link
                         href={it.href}

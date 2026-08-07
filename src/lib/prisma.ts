@@ -2,6 +2,12 @@ import path from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 
+declare global {
+  var __suppressActivityLog: boolean | undefined;
+}
+
+type AnyRecord = Record<string, unknown>;
+
 // Prisma 7 removed the built-in SQLite engine، لذا يلزم استخدام Driver Adapter.
 // نستخدم libsql (WASM) للاتصال بملف SQLite المحلي بشكل متسق بين أداة Prisma CLI والتطبيق.
 const dbPath =
@@ -36,24 +42,26 @@ const ENTITY_LABELS: Record<string, string> = {
   SystemUser: "مستخدم النظام",
 };
 
-function extractLabel(args: any, result: any): string {
-  const data = args?.data ?? {};
-  const v =
+function extractLabel(args: unknown, result: unknown): string {
+  const data = (args as { data?: AnyRecord } | undefined)?.data ?? {};
+  const res = result as AnyRecord | undefined;
+  const where = (args as { where?: { id?: string } } | undefined)?.where;
+  const v: unknown =
     data.plateNumber ??
     data.name ??
     data.clientName ??
     data.companyName ??
-    result?.plateNumber ??
-    result?.name ??
-    result?.clientName ??
-    result?.companyName ??
-    args?.where?.id ??
+    res?.plateNumber ??
+    res?.name ??
+    res?.clientName ??
+    res?.companyName ??
+    where?.id ??
     "";
   return typeof v === "string" || typeof v === "number" ? String(v) : "";
 }
 
 // تسجيل النشاط في جدول منفصل عبر العميل الأصلي (بدون وساطة) لتفادي التكرار اللانهائي
-async function recordActivity(model: string, operation: string, args: any, result: any) {
+async function recordActivity(model: string, operation: string, args: unknown, result: unknown) {
   const entityType = ENTITY_LABELS[model] ?? model;
 
   let action = "تعديل";
@@ -62,14 +70,15 @@ async function recordActivity(model: string, operation: string, args: any, resul
   else if (operation === "upsert") action = "إضافة/تعديل";
 
   // كشف الحذف الناعم (deletedAt) الذي تستخدمه شاشات النظام
-  const data = args?.data;
+  const data = (args as { data?: AnyRecord } | undefined)?.data;
   if (operation === "update" && data && "deletedAt" in data && data.deletedAt) {
     action = "حذف";
   }
 
   const label = extractLabel(args, result);
   const summary = `${action} ${entityType}${label ? " — " + label : ""}`;
-  const rawId = (result && (result.id ?? result.plateNumber)) || args?.where?.id || null;
+  const res = result as AnyRecord | undefined;
+  const rawId = (res && (res.id ?? res.plateNumber)) || (args as { where?: { id?: string } } | undefined)?.where?.id || null;
 
   await base.activityLog.create({
     data: {
@@ -87,7 +96,7 @@ const extended = base.$extends({
       async $allOperations({ model, operation, args, query }) {
         const result = await query(args);
         // تجاوز التسجيل أثناء استيراد النسخة الاحتياطية لتفادي إغراق السجل
-        if ((globalThis as any).__suppressActivityLog) return result;
+        if (globalThis.__suppressActivityLog) return result;
         // لا نسجّل عمليات جدول السجل نفسه
         if (model === "ActivityLog") return result;
 
@@ -100,10 +109,10 @@ const extended = base.$extends({
           "upsert",
           "deleteMany",
         ];
-        if (!MUTATIONS.includes(operation as string)) return result;
+        if (!MUTATIONS.includes(operation)) return result;
 
         try {
-          await recordActivity(model as string, operation as string, args, result);
+          await recordActivity(model, operation, args, result);
         } catch {
           // تجاهل أي خطأ في السجل كي لا يعطّل العملية الأصلية
         }

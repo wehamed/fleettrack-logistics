@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -36,20 +36,11 @@ export function RevenueFormDialog({
   revenue: RevenueRow | null;
   trucks: TruckOption[];
 }) {
-  const [truckId, setTruckId] = useState("");
-  const [revenueType, setRevenueType] = useState("أجرة نقل");
+  const [truckId, setTruckId] = useState(revenue?.truckId ?? "");
+  const [revenueType, setRevenueType] = useState(revenue?.revenueType ?? "أجرة نقل");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const isEdit = Boolean(revenue);
-
-  useEffect(() => {
-    if (open) {
-      setTruckId(revenue?.truckId ?? "");
-      setRevenueType(revenue?.revenueType ?? "أجرة نقل");
-      setError(null);
-      setPending(false);
-    }
-  }, [open, revenue]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

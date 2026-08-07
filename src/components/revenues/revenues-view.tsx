@@ -196,6 +196,7 @@ export function RevenuesView({
       )}
 
       <RevenueFormDialog
+        key={editing?.id ?? "new"}
         open={formOpen}
         onOpenChange={setFormOpen}
         revenue={editing}

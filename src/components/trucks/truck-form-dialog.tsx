@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,18 +33,10 @@ export function TruckFormDialog({
   onOpenChange: (v: boolean) => void;
   truck: TruckRow | null;
 }) {
-  const [status, setStatus] = useState("تعمل");
+  const [status, setStatus] = useState(truck?.status ?? "تعمل");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const isEdit = Boolean(truck);
-
-  useEffect(() => {
-    if (open) {
-      setStatus(truck?.status ?? "تعمل");
-      setError(null);
-      setPending(false);
-    }
-  }, [open, truck]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
