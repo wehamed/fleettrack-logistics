@@ -68,9 +68,6 @@ npx prisma migrate dev
 # or, to apply the schema without a migration history:
 # npx prisma db push
 
-# 4. (Optional) Seed demo fleet, employee, and financial data
-node seed-demo.mjs
-
 # 5. Start the development server (hot reload)
 npm run dev
 ```
