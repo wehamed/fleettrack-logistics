@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [1.0.0] - 2026-08-07
+## [1.0.0] - 2026-08-09
 
 ### Added
 - Fleet management system: trucks, drivers, employees, revenues, expenses, and payroll.

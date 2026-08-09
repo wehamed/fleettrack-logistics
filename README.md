@@ -61,6 +61,7 @@ flowchart LR
 - **RTL-native** — bilingual schema labels, Arabic typography (Cairo / Tajawal), persisted theme, configurable brand colors.
 
 [![CI](https://github.com/wehamed/fleettrack-logistics/actions/workflows/ci.yml/badge.svg)](https://github.com/wehamed/fleettrack-logistics/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/wehamed/fleettrack-logistics?style=flat-square)](https://github.com/wehamed/fleettrack-logistics/releases)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2.10-000000?style=flat-square&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.2.4-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)
