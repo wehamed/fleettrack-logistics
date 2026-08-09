@@ -7,6 +7,9 @@ import {
 } from "./session";
 
 // تجزئة كلمة المرور عبر scrypt المدمج في Node (لا مكتبات خارجية)
+const DEFAULT_ADMIN_USERNAME = "admin";
+const DEFAULT_ADMIN_PASSWORD = "admin123";
+
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
@@ -26,15 +29,39 @@ export function verifyPassword(password: string, stored: string): boolean {
 
 export type AuthState = { error?: string; success?: boolean };
 
+// هل كلمة المرور المدخلة هي الافتراضية المعروفة؟
+export function isDefaultAdminPassword(password: string): boolean {
+  return password === DEFAULT_ADMIN_PASSWORD;
+}
+
+// هل التجزئة المخزنة ما زالت لكلمة المرور الافتراضية؟
+export function usesDefaultPassword(passwordHash: string): boolean {
+  return verifyPassword(DEFAULT_ADMIN_PASSWORD, passwordHash);
+}
+
+// تحقق موحّد من كلمة المرور الجديدة (قصر، تطابق، ومنع الافتراضية)
+export function validateNewPassword(next: string, confirm: string): string | null {
+  if (!next || next.length < 6) {
+    return "كلمة المرور الجديدة يجب ألا تقل عن 6 أحرف";
+  }
+  if (next !== confirm) {
+    return "كلمة المرور الجديدة وتأكيدها غير متطابقين";
+  }
+  if (isDefaultAdminPassword(next)) {
+    return "لا يمكن استخدام كلمة المرور الافتراضية";
+  }
+  return null;
+}
+
 // التأكد من وجود مستخدم افتراضي عند أول تشغيل
 export async function ensureDefaultUser() {
   try {
     await prisma.systemUser.upsert({
-      where: { username: "admin" },
+      where: { username: DEFAULT_ADMIN_USERNAME },
       update: {},
       create: {
-        username: "admin",
-        passwordHash: hashPassword("admin123"),
+        username: DEFAULT_ADMIN_USERNAME,
+        passwordHash: hashPassword(DEFAULT_ADMIN_PASSWORD),
         displayName: "المحاسب",
       },
     });

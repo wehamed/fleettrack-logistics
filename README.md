@@ -118,21 +118,21 @@ npx prisma migrate dev
 npm run dev
 ```
 
-Open http://localhost:3000. Default credentials: username `admin`, password `admin123` (bootstrapped via `ensureDefaultUser` on first start — **change it immediately** from the Settings page).
+Open http://localhost:3000. Default credentials: username `admin`, password `admin123` (bootstrapped via `ensureDefaultUser` on first start). In **production** the first login with the default password is **forced to change it** before any other page becomes accessible; in development the default login is kept for convenience.
 
 ### Environment Variables
 
 | Variable | Purpose | Notes |
 |----------|---------|-------|
 | `DATABASE_URL` | SQLite file path for Prisma CLI / migrations | `file:./dev.db` |
-| `AUTH_SECRET` | HMAC session signing secret, ≥ 32 chars | Read by `src/lib/session.ts`; **required in production** — the code falls back to a hardcoded dev secret otherwise |
+| `AUTH_SECRET` | HMAC session signing secret, ≥ 32 chars | Read by `src/lib/session.ts`; **required in production** — production fails closed (refuses to sign sessions) when it is missing; the hardcoded fallback is used only in development |
 
 ```env
 DATABASE_URL="file:./dev.db"
 AUTH_SECRET="a-random-secret-string-at-least-32-characters-long"
 ```
 
-> Note: the committed `.env.example` ships `SECRET_KEY=`, but the runtime reads `AUTH_SECRET`. Set `AUTH_SECRET` for a production deployment.
+> The committed `.env.example` ships the correct variable name: `AUTH_SECRET`. Set it to a long random string for every deployment (and always for production, where a missing value makes the app fail closed).
 
 ### Scripts
 
@@ -154,9 +154,9 @@ There is currently no configured test suite (no `test` script in `package.json`)
 
 ## Security & Governance
 
-- **Password storage** — scrypt with a fresh 16-byte random salt per password and a 64-byte digest; verified with `crypto.timingSafeEqual`.
+- **Password storage** — scrypt with a fresh 16-byte random salt per password and a 64-byte digest; verified with `crypto.timingSafeEqual`; the well-known default password is blocked from being re-used and is **forced to change on first login in production**.
 - **Session integrity** — tokens signed with HMAC SHA-256, constant-time verification, 7-day max age, `HttpOnly` cookie; all routes except login and report exports gated by Middleware.
-- **Secret hygiene** — signing secret injected at runtime via `AUTH_SECRET`; no secrets in the repository (the shipped value is a dev-only fallback).
+- **Secret hygiene** — signing secret injected at runtime via `AUTH_SECRET`; production **fails closed** when it is missing instead of silently falling back to the development-only secret (the hardcoded value is dev-convenience only and never used in production).
 - **Audit trail** — every create/update/delete (including soft-deletes) recorded to `ActivityLog` by Prisma query middleware; recording is suspended during backup restore to avoid flooding the log.
 - **Backup safety** — full-system JSON export; restore executes within a single database transaction.
 - **Tenancy posture** — single-tenant by design; there is no cross-tenant isolation surface, which keeps the trust boundary to one operator and one machine.

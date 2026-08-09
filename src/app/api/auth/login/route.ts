@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword } from "@/lib/auth";
+import { verifyPassword, usesDefaultPassword } from "@/lib/auth";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
@@ -19,7 +19,11 @@ export async function POST(request: NextRequest) {
     }
 
     const token = await createSessionToken(user.id, user.username);
-    const response = NextResponse.redirect(new URL("/", request.url));
+    const target =
+      process.env.NODE_ENV === "production" && usesDefaultPassword(user.passwordHash)
+        ? "/change-password"
+        : "/";
+    const response = NextResponse.redirect(new URL(target, request.url));
     response.cookies.set({
       name: "kanwal_session",
       value: token,

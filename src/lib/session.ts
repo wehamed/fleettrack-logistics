@@ -1,8 +1,20 @@
 // إدارة الجلسة: رمز موقَّع بـ HMAC (SHA-256) عبر Web Crypto ليعمل في بيئتي
 // الخادم (Node) والوسيط (Edge) دون الحاجة لمكتبات خارجية.
 const SESSION_COOKIE_NAME = "kanwal_session";
-const SECRET = process.env.AUTH_SECRET || "kanwal-dev-secret-change-me";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 أيام بالثواني
+const DEV_FALLBACK_SECRET = "kanwal-dev-secret-change-me";
+
+// سر التوقيع: يُقرأ من AUTH_SECRET. في الإنتاج يكون إلزاميًا —
+// عند غيابه نرفض التوقيع (fail-closed) بدلاً من استخدام سر ثابت ضعيف.
+function resolveSecret(): string {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "AUTH_SECRET is not set. Refusing to sign session tokens with the development-only fallback secret in production."
+    );
+  }
+  return secret || DEV_FALLBACK_SECRET;
+}
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -26,7 +38,7 @@ function b64urlDecode(str: string): Uint8Array {
 async function sign(data: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
-    enc.encode(SECRET),
+    enc.encode(resolveSecret()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]

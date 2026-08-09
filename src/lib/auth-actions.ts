@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
-import { hashPassword, verifyPassword, getCurrentUser, type AuthState } from "./auth";
+import { hashPassword, verifyPassword, getCurrentUser, usesDefaultPassword, validateNewPassword, type AuthState } from "./auth";
 import {
   createSessionToken,
   SESSION_COOKIE_NAME,
@@ -31,7 +31,10 @@ export async function login(
     maxAge: SESSION_MAX_AGE,
     secure: process.env.NODE_ENV === "production",
   });
-  redirect("/");
+  // في الإنتاج: إجبار المستخدم على تغيير كلمة المرور الافتراضية عند أول دخول
+  const mustChangePassword =
+    process.env.NODE_ENV === "production" && usesDefaultPassword(user.passwordHash);
+  redirect(mustChangePassword ? "/change-password" : "/");
 }
 
 export async function logout() {
@@ -50,11 +53,9 @@ export async function changePassword(
   if (!current || !next || !confirm) {
     return { error: "جميع الحقول مطلوبة" };
   }
-  if (next.length < 6) {
-    return { error: "كلمة المرور الجديدة يجب ألا تقل عن 6 أحرف" };
-  }
-  if (next !== confirm) {
-    return { error: "كلمة المرور الجديدة وتأكيدها غير متطابقين" };
+  const validationError = validateNewPassword(next, confirm);
+  if (validationError) {
+    return { error: validationError };
   }
 
   const user = await getCurrentUser();
@@ -70,4 +71,17 @@ export async function changePassword(
     data: { passwordHash: hashPassword(next) },
   });
   return { success: true };
+}
+
+// نفس التحقق مع إعادة توجيه إجبارية بعد النجاح — تُستخدم في صفحة
+// تغيير كلمة المرور الافتراضية عند أول دخول في الإنتاج.
+export async function changePasswordRequired(
+  _prev: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  const result = await changePassword(_prev, formData);
+  if (result.success) {
+    redirect("/");
+  }
+  return result;
 }
