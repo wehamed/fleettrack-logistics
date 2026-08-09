@@ -26,6 +26,16 @@
 - Management receives audited financial reports (income statement) exported to PDF and Excel with Arabic/RTL formatting intact.
 - The entire suite runs on one machine with a single SQLite file — no database server, queues, or cloud accounts.
 
+## Screenshots
+
+Captured against synthetic demo data via the dev-only screenshot tooling. The full set (32 images) lives in [`screenshots/`](screenshots/).
+
+| | |
+| --- | --- |
+| ![Dashboard](screenshots/03-dashboard-light.png) | ![Trucks list](screenshots/05-trucks-list.png) |
+| ![Trucks Kanban](screenshots/06-trucks-kanban.png) | ![Revenues](screenshots/17-revenues-list.png) |
+| ![Income report](screenshots/26-reports-income.png) | ![Settings](screenshots/29-settings-company.png) |
+
 ## Architecture
 
 ```mermaid
