@@ -4,6 +4,52 @@
 
 > A self-hosted, single-tenant fleet and logistics management suite: a Next.js 16 App Router / React 19 server-rendered application backed by Prisma 7 over a local libsql (SQLite) store, unifying the fleet registry and truck-status lifecycle, driver-assignment history, revenue/expense ledgers, payroll, and audited financial reporting with PDF/Excel export under one authenticated session — with zero external services.
 
+## At a Glance
+
+| | |
+| --- | --- |
+| Domain | Fleet, logistics, payroll and financial operations |
+| Architecture | Single-process Next.js App Router — zero external services |
+| Backend | Server Components + Server Actions + API routes (auth / export / backup / health) |
+| Frontend | React 19 · Tailwind CSS 4 · Radix UI · Arabic-first RTL |
+| Database | SQLite via libsql (Prisma 7 driver adapter) — single file |
+| Data layer | Prisma client extension writes every mutation to an immutable `ActivityLog` |
+| Reporting | PDF (Puppeteer) and Excel (ExcelJS) export, browser print |
+| Security | scrypt hashing, HMAC-signed `HttpOnly` sessions, `middleware.ts` route guard |
+| Quality | Strict TypeScript, ESLint, typecheck CI gate |
+
+## What It Solves
+
+- Operators manage the full fleet lifecycle — trucks, statuses, and maintenance — in table and Kanban views under one authenticated session.
+- Dispatch and finance teams track revenue, expenses, and per-truck profitability without exporting to separate tools.
+- Payroll runs monthly across three salary schemes (fixed, per-trip, revenue-share), computed as `net = base − deductions − advances`.
+- Management receives audited financial reports (income statement) exported to PDF and Excel with Arabic/RTL formatting intact.
+- The entire suite runs on one machine with a single SQLite file — no database server, queues, or cloud accounts.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser[Browser - Arabic RTL UI] -->|session cookie| MW[middleware.ts route guard]
+    MW --> SC[Next.js Server Components]
+    SC --> SA[Server Actions]
+    SC --> API[API routes auth / export / backup / health]
+    SA --> Prisma[Prisma 7 + libsql]
+    API --> Prisma
+    Prisma --> Audit[ActivityLog audit extension]
+    Prisma --> DB[(SQLite file)]
+    API --> PDF[Puppeteer PDF export]
+    API --> XLSX[ExcelJS RTL export]
+```
+
+## Engineering Highlights
+
+- **Monetary precision** — all amounts stored as integer minor units (1/100) and computed with decimal.js, eliminating float rounding error.
+- **Auditable by design** — every create/update/delete is written to an immutable `ActivityLog` through a Prisma client extension; full JSON backup with transaction-scoped restore.
+- **Secure auth primitives** — scrypt password hashing with timing-safe comparison and HMAC SHA-256 signed session tokens via Web Crypto (Node + Edge compatible).
+- **Server-first rendering** — data access stays on the server; client components are limited to interactive widgets.
+- **RTL-native** — bilingual schema labels, Arabic typography (Cairo / Tajawal), persisted theme, configurable brand colors.
+
 ![Next.js](https://img.shields.io/badge/Next.js-16.2.10-000000?style=flat-square&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.2.4-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)
